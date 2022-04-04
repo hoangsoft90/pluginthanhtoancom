@@ -1,0 +1,33 @@
+name: Terminus every day
+
+on:
+  schedule:
+    - cron: "0 1 * * *"
+#on:
+  push:
+    branches:
+    - master
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@master
+    - name: Installing PHP
+      uses: shivammathur/setup-php@master
+      with:
+        php-version: '7.3'
+    - name: Installing Terminus
+      uses: kopepasah/setup-pantheon-terminus@master
+      with:
+        pantheon-machine-token: ${{ secrets.PANTHEON_MACHINE_TOKEN }}
+    - name: install terminus plugin
+      if: success()
+      run: mkdir -p ~/.terminus/plugins && cd ~/.terminus/plugins && git clone https://github.com/kevcooper/terminus-freeze-plugin.git
+      #run: terminus import:files ${{ secrets.PANTHEON_DOMAIN }} https://github.com/hoangsoft90/cgsmanager-cron/raw/master/killme.zip --yes
+      #run: curl -X POST '${{ secrets.SITE_URL }}/api/dev/commit' -d 'secret=${{ secrets.PANTHEON_MACHINE_TOKEN }}'
+
+    - name: unfreeze
+      if: success()
+      run: terminus site:unfreeze ${{ secrets.PANTHEON_NAME }}
+      #run: terminus env:commit --message "updated" --force -- ${{ secrets.PANTHEON_DOMAIN }}
